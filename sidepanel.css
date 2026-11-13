@@ -1,0 +1,266 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #202124;
+  background: #f8fafd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 260px;
+}
+
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 28px;
+}
+
+.brand-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.app-logo {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+
+.eyebrow {
+  margin: 0 0 2px;
+  color: #5f6368;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.intro {
+  margin: 8px 0 16px;
+  color: #5f6368;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.notice {
+  padding: 12px 14px;
+  border: 1px solid #f1d59b;
+  border-radius: 10px;
+  background: #fff8e7;
+  margin-bottom: 16px;
+}
+
+.notice h2 {
+  margin: 0;
+  font-size: 14px;
+  color: #855300;
+}
+
+.notice p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #613e00;
+}
+
+.primary-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #0b57d0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.primary-link:hover {
+  background: #0842a0;
+}
+
+.workflow {
+  background: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.workflow h2 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: #1f1f1f;
+}
+
+.step-desc {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: #5f6368;
+  line-height: 1.4;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.primary-button {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #0b57d0;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #0842a0;
+}
+
+.secondary-button {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #0b57d0;
+  border-radius: 8px;
+  background: #e8f0fe;
+  color: #0b57d0;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #d2e3fc;
+}
+
+.danger-button {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: #b3261e;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.danger-button:hover:not(:disabled) {
+  background: #8c1d18;
+}
+
+.outline-button {
+  width: 100%;
+  padding: 8px 14px;
+  border: 1px solid #dadce0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #444746;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.outline-button:hover:not(:disabled) {
+  background: #f1f3f4;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.status {
+  margin: 12px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #f1f3f4;
+  color: #3c4043;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.status.error {
+  background: #fce8e6;
+  color: #c5221f;
+}
+
+.confirmation {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.selection-count {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.acknowledgment {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #444746;
+  cursor: pointer;
+}
+
+.acknowledgment input {
+  margin-top: 2px;
+  accent-color: #0b57d0;
+}
+
+label[for="phrase"] {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #444746;
+}
+
+.phrase-input {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  border: 1px solid #747775;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: monospace;
+}
+
+footer {
+  margin-top: 20px;
+  color: #5f6368;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+footer p {
+  margin: 0 0 8px;
+}
+
+footer a {
+  color: #0b57d0;
+}

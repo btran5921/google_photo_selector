@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="48" height="48">
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a73e8"/>
+      <stop offset="100%" stop-color="#0b57d0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Container Box -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="#ffffff" filter="url(#shadow)"/>
+
+  <!-- Google Photos Pinwheel Petals -->
+  <!-- Top Right - Red -->
+  <path d="M 64,64 L 64,28 A 18,18 0 0,1 82,46 L 82,64 Z" fill="#EA4335"/>
+  <!-- Top Left - Yellow -->
+  <path d="M 64,64 L 28,64 A 18,18 0 0,1 46,46 L 64,46 Z" fill="#FBBC05"/>
+  <!-- Bottom Left - Green -->
+  <path d="M 64,64 L 64,100 A 18,18 0 0,1 46,82 L 46,64 Z" fill="#34A853"/>
+  <!-- Bottom Right - Blue -->
+  <path d="M 64,64 L 100,64 A 18,18 0 0,1 82,82 L 64,82 Z" fill="#4285F4"/>
+
+  <!-- Center Pinwheel Dot -->
+  <circle cx="64" cy="64" r="7" fill="#ffffff"/>
+
+  <!-- Action Badge - Blue Circle with Checkmark -->
+  <circle cx="92" cy="92" r="22" fill="url(#blueGrad)" stroke="#ffffff" stroke-width="3"/>
+  <path d="M 83,92 L 89,98 L 102,85" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
