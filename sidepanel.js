@@ -1,5 +1,6 @@
 const selectVisibleButton = document.querySelector("#select-visible");
 const autoSelectButton = document.querySelector("#auto-select");
+const findDuplicatesButton = document.querySelector("#find-duplicates");
 const stopAutoSelectButton = document.querySelector("#stop-auto-select");
 const deselectAllButton = document.querySelector("#deselect-all");
 const inspectButton = document.querySelector("#inspect");
@@ -70,6 +71,7 @@ autoSelectButton.addEventListener("click", async () => {
   autoSelectButton.hidden = true;
   stopAutoSelectButton.hidden = false;
   selectVisibleButton.disabled = true;
+  findDuplicatesButton.disabled = true;
   deselectAllButton.disabled = true;
   inspectButton.disabled = true;
   clearConfirmation();
@@ -125,9 +127,47 @@ function stopAutoSelectionUI() {
   autoSelectButton.hidden = false;
   stopAutoSelectButton.hidden = true;
   selectVisibleButton.disabled = false;
+  findDuplicatesButton.disabled = false;
   deselectAllButton.disabled = false;
   inspectButton.disabled = false;
 }
+
+findDuplicatesButton.addEventListener("click", async () => {
+  findDuplicatesButton.disabled = true;
+  clearConfirmation();
+  setStatus("Comparing the thumbnails of loaded photos…", false);
+  try {
+    const result = await sendToPhotos({ type: "find-duplicate-photos" });
+    if (!result || !result.ok) {
+      throw new Error(result && result.error ? result.error : "Could not scan loaded photos for duplicates.");
+    }
+
+    if (result.duplicateCount === 0) {
+      setStatus(
+        `No matching duplicates found among ${result.scannedCount} comparable loaded photos.` +
+          (result.unreadableCount > 0
+            ? ` Could not compare ${result.unreadableCount} thumbnail${result.unreadableCount === 1 ? "" : "s"}.`
+            : ""),
+        false
+      );
+      return;
+    }
+
+    const summary =
+      `Found ${result.duplicateCount} duplicate cop${result.duplicateCount === 1 ? "y" : "ies"} ` +
+      `in ${result.groupCount} group${result.groupCount === 1 ? "" : "s"}; ` +
+      `selected ${result.newlySelected} new item${result.newlySelected === 1 ? "" : "s"}. ` +
+      `One copy per group was left unselected.` +
+      (result.unreadableCount > 0
+        ? ` Could not compare ${result.unreadableCount} thumbnail${result.unreadableCount === 1 ? "" : "s"}.`
+        : "");
+    await inspectSelectionCount(summary);
+  } catch (error) {
+    setStatus(error.message || "Could not scan loaded photos for duplicates.", true);
+  } finally {
+    findDuplicatesButton.disabled = false;
+  }
+});
 
 // 3. Deselect All
 deselectAllButton.addEventListener("click", async () => {
@@ -142,7 +182,7 @@ deselectAllButton.addEventListener("click", async () => {
 });
 
 // Helper to inspect selection count
-async function inspectSelectionCount() {
+async function inspectSelectionCount(reviewMessage) {
   try {
     const result = await sendToPhotos({ type: "inspect-selection" });
     if (!result || !result.ok) {
@@ -152,7 +192,10 @@ async function inspectSelectionCount() {
     selectionCount.textContent = `Google Photos reports ${inspectedCount} selected item${inspectedCount === 1 ? "" : "s"}.`;
     requiredPhrase.textContent = `MOVE ${inspectedCount} TO TRASH`;
     confirmation.hidden = false;
-    setStatus("Review the count and confirm only if it matches the batch you intend to remove.", false);
+    setStatus(
+      reviewMessage || "Review the count and confirm only if it matches the batch you intend to remove.",
+      false
+    );
   } catch (error) {
     setStatus(error.message || "Could not contact Google Photos. Confirm that its tab is active and reload it.", true);
   }

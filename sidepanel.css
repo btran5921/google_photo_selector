@@ -115,6 +115,10 @@ h1 {
   line-height: 1.4;
 }
 
+.duplicate-help {
+  margin: 10px 0 0;
+}
+
 .button-group {
   display: flex;
   flex-direction: column;

@@ -134,6 +134,217 @@ function findAllPhotoCards() {
   return candidates.filter((el) => el.offsetWidth > 0 || el.offsetHeight > 0);
 }
 
+function getDuplicatePhotoCards() {
+  const cards = findAllPhotoCards().map((element) =>
+    element.closest('[role="gridcell"]') ||
+    element.closest('a[href*="/photo/"], a[href*="./photo/"]') ||
+    element
+  );
+  return Array.from(new Set(cards));
+}
+
+function getCardThumbnail(card) {
+  const images = Array.from(card.querySelectorAll("img"))
+    .filter((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0)
+    .sort((left, right) =>
+      right.naturalWidth * right.naturalHeight - left.naturalWidth * left.naturalHeight
+    );
+  if (images.length > 0) {
+    return { image: images[0], source: images[0].currentSrc || images[0].src };
+  }
+
+  const elements = [card, ...card.querySelectorAll("*")];
+  for (const element of elements) {
+    const background = window.getComputedStyle(element).backgroundImage;
+    const match = background && background.match(/url\(["']?(.*?)["']?\)/);
+    if (match) {
+      return { image: null, source: match[1] };
+    }
+  }
+  return null;
+}
+
+function createDifferenceHash(image) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 9;
+  canvas.height = 8;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) {
+    throw new Error("Could not create a canvas to compare photo thumbnails.");
+  }
+
+  const width = image.naturalWidth || image.width;
+  const height = image.naturalHeight || image.height;
+  const cropSize = Math.min(width, height);
+  context.drawImage(
+    image,
+    (width - cropSize) / 2,
+    (height - cropSize) / 2,
+    cropSize,
+    cropSize,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const luminance = (x, y) => {
+    const offset = (y * canvas.width + x) * 4;
+    return 0.299 * pixels[offset] + 0.587 * pixels[offset + 1] + 0.114 * pixels[offset + 2];
+  };
+  const bits = [];
+  const colors = [];
+  for (let y = 0; y < canvas.height; y++) {
+    for (let x = 0; x < canvas.width; x++) {
+      if (x < 8) {
+        const offset = (y * canvas.width + x) * 4;
+        colors.push(pixels[offset], pixels[offset + 1], pixels[offset + 2]);
+        if (luminance(x, y) > luminance(x + 1, y)) {
+          bits.push("1");
+        } else {
+          bits.push("0");
+        }
+      }
+    }
+  }
+  return { hash: bits.join(""), colors };
+}
+
+function hashDistance(left, right) {
+  let distance = 0;
+  for (let index = 0; index < left.length; index++) {
+    if (left[index] !== right[index]) {
+      distance++;
+    }
+  }
+  return distance;
+}
+
+function averageColorDifference(left, right) {
+  let difference = 0;
+  for (let index = 0; index < left.length; index++) {
+    difference += Math.abs(left[index] - right[index]);
+  }
+  return difference / left.length;
+}
+
+function sameThumbnail(left, right) {
+  return hashDistance(left.hash, right.hash) <= 2 &&
+    averageColorDifference(left.colors, right.colors) <= 12;
+}
+
+function loadCorsImage(source) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    const timeout = setTimeout(() => resolve(null), 5000);
+    image.crossOrigin = "anonymous";
+    image.onload = () => {
+      clearTimeout(timeout);
+      resolve(image);
+    };
+    image.onerror = () => {
+      clearTimeout(timeout);
+      resolve(null);
+    };
+    image.src = source;
+  });
+}
+
+async function getThumbnailFingerprint(thumbnail) {
+  if (thumbnail.image) {
+    try {
+      return createDifferenceHash(thumbnail.image);
+    } catch (error) {
+      if (error.name !== "SecurityError") {
+        throw error;
+      }
+    }
+  }
+
+  const image = await loadCorsImage(thumbnail.source);
+  if (!image) {
+    return null;
+  }
+  try {
+    return createDifferenceHash(image);
+  } catch (error) {
+    if (error.name === "SecurityError") {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function findDuplicatePhotos() {
+  if (inspectSelection().ok) {
+    return {
+      ok: false,
+      error: "Deselect the current photos before scanning for duplicates so the retained copy is not included in the Trash selection."
+    };
+  }
+
+  const cards = getDuplicatePhotoCards();
+  const photoFingerprints = [];
+  let unreadableCount = 0;
+  for (let index = 0; index < cards.length; index += 6) {
+    const batch = await Promise.all(cards.slice(index, index + 6).map(async (card) => {
+      const thumbnail = getCardThumbnail(card);
+      return thumbnail ? getThumbnailFingerprint(thumbnail) : null;
+    }));
+    batch.forEach((fingerprint, batchIndex) => {
+      if (fingerprint) {
+        photoFingerprints.push({ card: cards[index + batchIndex], fingerprint });
+      } else {
+        unreadableCount++;
+      }
+    });
+  }
+
+  if (photoFingerprints.length === 0) {
+    return {
+      ok: false,
+      error: "Could not read any loaded photo thumbnails for visual comparison. Google Photos or the browser may be blocking thumbnail pixel access."
+    };
+  }
+
+  const duplicateGroups = [];
+  for (const item of photoFingerprints) {
+    const group = duplicateGroups.find((candidate) =>
+      sameThumbnail(candidate[0].fingerprint, item.fingerprint)
+    );
+    if (group) {
+      group.push(item);
+    } else {
+      duplicateGroups.push([item]);
+    }
+  }
+
+  const matchedGroups = duplicateGroups.filter((group) => group.length > 1);
+  const duplicateCount = matchedGroups.reduce((count, group) => count + group.length - 1, 0);
+  let newlySelected = 0;
+  for (const group of matchedGroups) {
+    for (const item of group.slice(1)) {
+      const card = item.card;
+      const checkbox = card.querySelector('[role="checkbox"], [aria-label*="Select"], [aria-label*="select"]');
+      const target = checkbox || card;
+      if (target.getAttribute("aria-checked") === "true") {
+        continue;
+      }
+      forceClick(target);
+      newlySelected++;
+    }
+  }
+
+  return {
+    ok: true,
+    scannedCount: photoFingerprints.length,
+    unreadableCount,
+    groupCount: matchedGroups.length,
+    duplicateCount,
+    newlySelected
+  };
+}
+
 function selectAllVisible() {
   let unselected = findAllPhotoCheckboxes();
 
@@ -256,6 +467,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === "select-all-visible") {
     sendResponse(selectAllVisible());
     return;
+  }
+  if (message.type === "find-duplicate-photos") {
+    findDuplicatePhotos()
+      .then(sendResponse)
+      .catch((error) => sendResponse({
+        ok: false,
+        error: error.message || "An unexpected error occurred while comparing photo thumbnails."
+      }));
+    return true;
   }
   if (message.type === "auto-select-step") {
     sendResponse(autoSelectStep());
